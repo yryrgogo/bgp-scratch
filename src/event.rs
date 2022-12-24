@@ -4,4 +4,6 @@
 #[derive(PartialEq, Eq, Debug, Clone, Hash)]
 pub enum Event {
     ManualStart,
+    // この実装では正常系しか実装しないため、TcpConnectionConfirmed で TcpCrAcked も兼ねる
+    TcpConnectionConfirmed,
 }
