@@ -19,6 +19,7 @@ name = "bgp-scratch"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytes",
  "thiserror",
  "tokio",
  "tracing",
