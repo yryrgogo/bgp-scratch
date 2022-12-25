@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::connection::Connection;
 use crate::event::Event;
 use crate::event_queue::EventQueue;
+use crate::packets::message::Message;
 use crate::state::State;
 
 /// BGP の RFC で示されている実装方針
@@ -62,7 +63,17 @@ impl Peer {
                 _ => {}
             },
             State::Connect => match event {
-                Event::TcpConnectionConfirmed => self.state = State::OpenSent,
+                Event::TcpConnectionConfirmed => {
+                    self.tcp_connection
+                        .as_mut()
+                        .expect("TCP Connection が確立できていません。")
+                        .send(Message::new_open(
+                            self.config.local_as,
+                            self.config.local_ip,
+                        ))
+                        .await;
+                    self.state = State::OpenSent
+                }
                 _ => {}
             },
             _ => {}

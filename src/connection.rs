@@ -1,14 +1,18 @@
 use anyhow::{Context, Result};
+use bytes::{BufMut, BytesMut};
+use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
 use crate::config::{Config, Mode};
 use crate::error::CreateConnectionError;
+use crate::packets::message::Message;
 
 /// 通信に関する処理を担当する構造体
 /// TcpConnection を張ったり、crate::packets::message::Message のデータを送受信したりする
 #[derive(Debug)]
 pub struct Connection {
     conn: TcpStream,
+    buffer: BytesMut,
 }
 
 impl Connection {
@@ -17,7 +21,13 @@ impl Connection {
             Mode::Active => Self::connect_to_remote_peer(config).await,
             Mode::Passive => Self::wait_connection_from_remote_peer(config).await,
         }?;
-        Ok(Self { conn })
+        let buffer = BytesMut::with_capacity(1500);
+        Ok(Self { conn, buffer })
+    }
+
+    pub async fn send(&mut self, message: Message) {
+        let bytes: BytesMut = message.into();
+        self.conn.write_all(&bytes[..]).await;
     }
 
     async fn connect_to_remote_peer(config: &Config) -> Result<TcpStream> {
